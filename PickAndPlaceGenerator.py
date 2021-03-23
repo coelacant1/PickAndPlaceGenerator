@@ -3,21 +3,21 @@ from shapely.geometry.polygon import Polygon
 
 point = Point(0.5, 0.5)
 polygon = Polygon([(0.0, 0.0), (113.0, 0.0), (168.0, 91.0), (0.0, 132.0)])
-ignoreBL = Polygon([(0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0)])
-ignoreBR = Polygon([(109.0, 0.0), (113.0, 0.0), (113.0, 4.0), (109.0, 4.0)])
+ignoreBL = Polygon([(0.0, 0.0), (1.0, 0.0), (1.0, 38.0), (0.0, 38.0)])
+ignoreBR = Polygon([(111.0, 0.0), (113.0, 0.0), (113.0, 3.0), (111.0, 3.0)])
 ignoreTR = Polygon([(164.0, 87.0), (168.0, 87.0), (168.0, 91.0), (164.0, 91.0)])
 ignoreTL = Polygon([(0.0, 128.0), (4.0, 128.0), (4.0, 132.0), (0.0, 132.0)])
 
-coorX = 0.0
-coorY = 2.5
+coorX = 3.0
+coorY = 3.0
 
-margin = 2.0
-increment = 3
+margin = 2.5
+increment = 4.5
 
-xRangMin = -50
+xRangMin = -60
 xRangMax = 300
-yRangMin = 0
-yRangMax = 150
+yRangMin = -20
+yRangMax = 170
 
 xRangMinConv = int(xRangMin / increment)
 xRangMaxConv = int(xRangMax / increment)
@@ -28,19 +28,34 @@ currentLED = 1
 
 f = open("C:\\TestOutput.csv", "w")
 
+f.write("Altium Designer Pick and Place Locations\n")
+f.write("\n")
+f.write("========================================================================================================================\n")
+f.write("File Design Information:\n")
+f.write("\n")
+f.write("Date:       27/01/21\n")
+f.write("Time:       12:00\n")
+f.write("Revision:   Not in VersionControl\n")
+f.write("Variant:    No variations\n")
+f.write("Units used: mm\n")
+f.write("\n")
 f.write("""\"Designator\","Comment\","Layer\",\"Center-X(mm)\",\"Center-Y(mm)\",\"Rotation\"""")
 
-def checkMargin(poly, x, y, margin):
-    if not poly.contains(Point(coorX + margin, coorY + margin)):
-        return False
-    elif not poly.contains(Point(coorX + margin, coorY - margin)):
-        return False
-    elif not poly.contains(Point(coorX - margin, coorY + margin)):
-        return False
-    elif not poly.contains(Point(coorX - margin, coorY - margin)):
-        return False
-    else:
-        return True
+def checkIntersects(poly, x, y, margin):
+    checkPoly = Polygon([Point(coorX + margin, coorY + margin),
+                         Point(coorX + margin, coorY - margin),
+                         Point(coorX - margin, coorY + margin),
+                         Point(coorX - margin, coorY - margin)])
+
+    return not poly.intersects(checkPoly)
+
+def checkContains(poly, x, y, margin):
+    checkPoly = Polygon([Point(coorX + margin, coorY + margin),
+                         Point(coorX + margin, coorY - margin),
+                         Point(coorX - margin, coorY + margin),
+                         Point(coorX - margin, coorY - margin)])
+
+    return not poly.contains(checkPoly)
 
 def addLED(x, y, rotation):
     global currentLED
@@ -50,39 +65,61 @@ def addLED(x, y, rotation):
     f.write(output)
     currentLED += 1
 
-
 def checkMultiple(x, y, margin):
     value = True
 
-    if not checkMargin(polygon, x, y, margin):
+    if checkContains(polygon, x, y, margin):
+        value = False# = False
+
+    if not checkIntersects(ignoreBL, x, y, margin):
         value = False
-    if checkMargin(ignoreBL, x, y, margin):
+        print("Inside BL")
+    if not checkIntersects(ignoreBR, x, y, margin):
         value = False
-    if checkMargin(ignoreBR, x, y, margin):
+        print("Inside BR")
+    if not checkIntersects(ignoreTR, x, y, margin):
         value = False
-    if checkMargin(ignoreTR, x, y, margin):
+        print("Inside BR")
+    if not checkIntersects(ignoreTL, x, y, margin):
         value = False
-    if checkMargin(ignoreTL, x, y, margin):
-        value = False
+        print("Inside TL")
 
     return value
 
+flip = True
 
 for y in range(yRangMinConv, yRangMaxConv):
 
     for x in range(xRangMinConv, xRangMaxConv):
-        if checkMultiple(coorX, coorY, margin):
-            addLED(x, y, 180.0)
+        flip = not flip
 
         coorX = coorX + increment
+
+        if checkMultiple(coorX, coorY, margin):
+            if flip:
+                addLED(x, y, 90.0)
+            else:
+                addLED(x, y, 0.0)
+
 
     coorY = coorY + increment
 
     for x in range(xRangMinConv, xRangMaxConv):
-        if checkMultiple(coorX, coorY, margin):
-            addLED(x, y, 0.0)
+        flip = not flip
 
         coorX = coorX - increment
+
+        if checkMultiple(coorX, coorY, margin):
+            if flip:
+                addLED(x, y, 180.0)
+            else:
+                addLED(x, y, 270.0)
+
+
+    print(coorX)
+
+
+    flip = not flip
 
     coorY = coorY + increment
     coorX = coorX - increment
