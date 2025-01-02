@@ -16,9 +16,9 @@ The script:
 
 1. **Python 3.7+**
 2. **Shapely**:
-   '''
+   ```bash
    pip install shapely
-   '''
+   ```
 
 ## Usage
 
