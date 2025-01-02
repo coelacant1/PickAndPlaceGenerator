@@ -45,7 +45,7 @@ The script:
 
 Below is a **partial** code snippet highlighting the polygon definitions and their purpose:
 
-'''
+```python
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
@@ -85,7 +85,7 @@ ignoreTL = Polygon([
     (4.0, 132.0),
     (0.0, 132.0)
 ])
-'''
+```
 
 - The main `polygon` variable outlines the PCB shape.  
 - The `ignore*` polygons mark regions to exclude (e.g., mechanical cutouts, connectors).
